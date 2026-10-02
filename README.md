@@ -1,8 +1,10 @@
 # Tessera Explorer
 
+<img width="1917" height="1011" alt="image" src="https://github.com/user-attachments/assets/1d1a4868-9060-433a-b2a9-0588942c2d46" />
+
 A native Windows (WPF, .NET 10) developer tool for exploring everything
 [Tessera.Nxpsc](../Tessera.Nxpsc) offers, against a real PC/SC card or
-libnxpsc's mock card. Styled with the Obsidian Pay design system.
+libnxpsc's mock card. Styled with the OCS design system.
 
 ```
 dotnet run
