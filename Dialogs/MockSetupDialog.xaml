@@ -1,0 +1,33 @@
+<Window Style="{StaticResource AppWindow}" x:Class="Tessera.Explorer.Dialogs.MockSetupDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="clr-namespace:Tessera.Explorer.Controls"
+        xmlns:nx="clr-namespace:Tessera.Nxpsc;assembly=Tessera.Nxpsc"
+        Title="Mock card" Background="{DynamicResource Background}" FontFamily="{StaticResource FontSans}" FontSize="13"
+        SizeToContent="Height" Width="500" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        SourceInitialized="Window_SourceInitialized">
+  <Border Padding="24,22,24,20">
+    <StackPanel>
+      <TextBlock Text="Create a mock card" Style="{StaticResource SectionTitle}" FontSize="17"/>
+      <TextBlock Style="{StaticResource MutedText}" FontSize="13" Margin="0,8,0,16" LineHeight="18"
+                 Text="libnxpsc's own mock card with state: real framing, real card-side crypto. The PICC master key is the factory 2K3DES zero key; applications start empty. Use the Mock lab page to add applications, files and keys afterwards."/>
+      <c:Field Label="Card type">
+        <c:EnumBox x:Name="TypeBox" EnumType="{x:Type nx:NxpscCardType}"/>
+      </c:Field>
+      <c:Field Label="UID (7 bytes, hex)">
+        <TextBox x:Name="UidBox" Style="{StaticResource MonoTextBox}" Text="04A1B2C3D4E5F6"/>
+      </c:Field>
+      <c:Field Label="Command set">
+        <c:EnumBox x:Name="CmdSetBox" EnumType="{x:Type nx:NxpscCmdSet}"/>
+      </c:Field>
+      <Border Background="{DynamicResource DestructiveSoft}" CornerRadius="6" Padding="12,10" Margin="0,4,12,0">
+        <TextBlock Style="{StaticResource MutedText}" Foreground="{DynamicResource Foreground}" LineHeight="17"
+                   Text="Creating a mock fixes libnxpsc's RNG for this whole process. From then on real readers are refused until you restart the explorer."/>
+      </Border>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+        <Button Content="Cancel" IsCancel="True" MinWidth="84"/>
+        <Button Content="Create mock" Margin="8,0,0,0" MinWidth="110" IsDefault="True" Click="Ok_Click" Style="{StaticResource PrimaryButton}"/>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</Window>

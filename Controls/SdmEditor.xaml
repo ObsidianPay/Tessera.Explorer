@@ -1,0 +1,31 @@
+<UserControl x:Class="Tessera.Explorer.Controls.SdmEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Tessera.Explorer.Controls">
+  <StackPanel>
+    <WrapPanel>
+      <CheckBox x:Name="Enabled" Content="SDM enabled" IsChecked="True" Margin="0,2,18,2"/>
+      <CheckBox x:Name="UidMirror" Content="UID mirror" IsChecked="True" Margin="0,2,18,2"/>
+      <CheckBox x:Name="CounterMirror" Content="Read counter mirror" IsChecked="True" Margin="0,2,18,2"/>
+      <CheckBox x:Name="CounterLimit" Content="Read counter limit" Margin="0,2,18,2"/>
+      <CheckBox x:Name="EncData" Content="Encrypt file data" Margin="0,2,18,2"/>
+    </WrapPanel>
+    <TextBlock Text="ACCESS KEYS (hex nibble: 0-4 key, E plain, F none)" Style="{StaticResource Eyebrow}" Margin="0,10,0,6"/>
+    <WrapPanel>
+      <c:Field Label="Meta read" Width="100"><TextBox x:Name="MetaKey" Style="{StaticResource MonoTextBox}" Text="E"/></c:Field>
+      <c:Field Label="File read" Width="100"><TextBox x:Name="FileKey" Style="{StaticResource MonoTextBox}" Text="2"/></c:Field>
+      <c:Field Label="Counter ret" Width="100"><TextBox x:Name="CounterKey" Style="{StaticResource MonoTextBox}" Text="2"/></c:Field>
+    </WrapPanel>
+    <TextBlock Text="OFFSETS INTO THE NDEF FILE (decimal)" Style="{StaticResource Eyebrow}" Margin="0,6,0,6"/>
+    <WrapPanel>
+      <c:Field Label="UID" Width="100"><TextBox x:Name="UidOff" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+      <c:Field Label="Counter" Width="100"><TextBox x:Name="CtrOff" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+      <c:Field Label="PICC data" Width="100"><TextBox x:Name="PiccOff" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+      <c:Field Label="MAC input" Width="100"><TextBox x:Name="MacInOff" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+      <c:Field Label="Enc offset" Width="100"><TextBox x:Name="EncOff" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+      <c:Field Label="Enc length" Width="100"><TextBox x:Name="EncLen" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+      <c:Field Label="MAC" Width="100"><TextBox x:Name="MacOff" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+      <c:Field Label="Counter limit" Width="100"><TextBox x:Name="LimitVal" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+    </WrapPanel>
+  </StackPanel>
+</UserControl>

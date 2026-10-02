@@ -1,0 +1,189 @@
+<Window Style="{StaticResource AppWindow}" x:Class="Tessera.Explorer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Tessera Explorer" WindowStartupLocation="CenterScreen" Width="1360" Height="880" MinWidth="980" MinHeight="620"
+        Background="{DynamicResource Background}" FontFamily="{StaticResource FontSans}" FontSize="13"
+        TextElement.Foreground="{DynamicResource Foreground}"
+        SourceInitialized="Window_SourceInitialized" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- ===== Menu bar ===== -->
+    <Border Grid.Row="0" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1" Padding="8,4">
+      <Menu>
+        <MenuItem Header="_Session">
+          <MenuItem Header="Connect to reader..." Click="Nav_Connection"/>
+          <MenuItem Header="New mock card..." Click="NewMock_Click"/>
+          <MenuItem x:Name="DisconnectItem" Header="Disconnect" Click="Disconnect_Click"/>
+          <Separator Style="{StaticResource MenuSeparator}"/>
+          <MenuItem Header="Restart explorer" Click="Restart_Click"/>
+          <MenuItem Header="Exit" Click="Exit_Click" InputGestureText="Alt+F4"/>
+        </MenuItem>
+        <MenuItem Header="_Card">
+          <MenuItem Header="GetVersion" Click="Quick_GetVersion"/>
+          <MenuItem Header="Identify" Click="Quick_Identify"/>
+          <MenuItem Header="GetCardUID" Click="Quick_Uid"/>
+          <MenuItem Header="GetFreeMemory" Click="Quick_FreeMemory"/>
+          <MenuItem Header="GetSignature" Click="Quick_Signature"/>
+          <Separator Style="{StaticResource MenuSeparator}"/>
+          <MenuItem Header="Select PICC (AID 000000)" Click="Quick_SelectPicc"/>
+          <MenuItem Header="Authenticate PICC with factory key" Click="Quick_AuthPicc"/>
+          <MenuItem Header="ResetChannel" Click="Quick_ResetChannel"/>
+        </MenuItem>
+        <MenuItem Header="_Go" x:Name="GoMenu"/>
+        <MenuItem Header="_View">
+          <MenuItem Header="Theme">
+            <MenuItem x:Name="ThemeSystem" Header="Follow system" IsCheckable="True" Click="Theme_Click" Tag="System"/>
+            <MenuItem x:Name="ThemeLight" Header="Light" IsCheckable="True" Click="Theme_Click" Tag="Light"/>
+            <MenuItem x:Name="ThemeDark" Header="Dark" IsCheckable="True" Click="Theme_Click" Tag="Dark"/>
+          </MenuItem>
+          <MenuItem Header="Dock output">
+            <MenuItem x:Name="DockTop" Header="Top" IsCheckable="True" Click="Dock_Click" Tag="Top"/>
+            <MenuItem x:Name="DockBottom" Header="Bottom" IsCheckable="True" IsChecked="True" Click="Dock_Click" Tag="Bottom"/>
+            <MenuItem x:Name="DockLeft" Header="Left" IsCheckable="True" Click="Dock_Click" Tag="Left"/>
+            <MenuItem x:Name="DockRight" Header="Right" IsCheckable="True" Click="Dock_Click" Tag="Right"/>
+          </MenuItem>
+          <MenuItem x:Name="OutputToggle" Header="Output panel" IsCheckable="True" IsChecked="True" Click="OutputToggle_Click" InputGestureText="Ctrl+`"/>
+          <MenuItem x:Name="TraceToggle" Header="Trace APDU frames" IsCheckable="True" Click="TraceToggle_Click" InputGestureText="Ctrl+T"/>
+          <Separator Style="{StaticResource MenuSeparator}"/>
+          <MenuItem Header="Clear output" Click="ClearOutput_Click" InputGestureText="Ctrl+L"/>
+          <MenuItem Header="Save output..." Click="SaveOutput_Click" InputGestureText="Ctrl+S"/>
+        </MenuItem>
+        <MenuItem Header="_Help">
+          <MenuItem Header="libnxpsc self test" Click="SelfTest_Click"/>
+          <MenuItem Header="About" Click="About_Click"/>
+        </MenuItem>
+      </Menu>
+    </Border>
+
+    <!-- ===== Workspace: body + splitter + output, rearranged by DockOutput() ===== -->
+    <Grid x:Name="Workspace" Grid.Row="1">
+    <Grid x:Name="BodyHost">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="224"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- Sidebar -->
+      <Border Background="{DynamicResource Sidebar}" BorderBrush="{DynamicResource SidebarBorder}" BorderThickness="0,0,1,0">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="18,16,16,14">
+            <Viewbox Width="26" Height="26">
+              <Canvas Width="240" Height="240">
+                <Polygon Points="120,120 120,20 206.6,70" Fill="#7E1DFB"/>
+                <Polygon Points="120,120 206.6,70 206.6,170" Fill="#A266FC"/>
+                <Polygon Points="120,120 206.6,170 120,220" Fill="#5B13C0"/>
+                <Polygon Points="120,120 120,220 33.4,170" Fill="#7E1DFB"/>
+                <Polygon Points="120,120 33.4,170 33.4,70" Fill="#5B13C0"/>
+                <Polygon Points="120,120 33.4,70 120,20" Fill="#A266FC"/>
+              </Canvas>
+            </Viewbox>
+            <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+              <TextBlock Text="Tessera" FontSize="17" FontWeight="Light" LineHeight="18"/>
+              <TextBlock Text="NXPSC EXPLORER" Style="{StaticResource Eyebrow}" FontSize="10"/>
+            </StackPanel>
+          </StackPanel>
+          <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource SidebarBorder}" BorderThickness="0,1,0,0" Padding="16,12">
+            <StackPanel>
+              <TextBlock x:Name="SidebarLib" Style="{StaticResource Eyebrow}"/>
+              <TextBlock x:Name="SidebarCard" Margin="0,6,0,0" FontFamily="{StaticResource FontMono}" FontSize="12" Text="no session" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+          <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="10,0,10,8">
+            <StackPanel x:Name="NavHost"/>
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
+
+      <!-- Content -->
+      <Grid Grid.Column="1">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <Border BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1" Padding="24,12,24,12">
+          <DockPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+              <Border x:Name="LostBanner" Style="{StaticResource Pill}" Background="{DynamicResource DestructiveSoft}" Visibility="Collapsed" Margin="0,0,8,0">
+                <TextBlock Text="SESSION LOST - AUTHENTICATE AGAIN" Style="{StaticResource Eyebrow}" Foreground="{DynamicResource Destructive}"/>
+              </Border>
+            </StackPanel>
+            <StackPanel>
+              <TextBlock x:Name="PageTitle" FontSize="15" FontWeight="SemiBold"/>
+              <TextBlock x:Name="PageSubtitle" Style="{StaticResource MutedText}" Margin="0,1,0,0"/>
+            </StackPanel>
+          </DockPanel>
+        </Border>
+        <Grid Grid.Row="1">
+          <ContentControl x:Name="PageHost" IsTabStop="False"/>
+          <!-- shown on card pages while there is no session -->
+          <Border x:Name="NoSession" Background="{DynamicResource Background}" Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440">
+              <TextBlock Text="NO SESSION" Style="{StaticResource Eyebrow}" HorizontalAlignment="Center"/>
+              <TextBlock Text="This page talks to a card." Style="{StaticResource SectionTitle}" FontSize="19" HorizontalAlignment="Center" Margin="0,6,0,0"/>
+              <TextBlock Style="{StaticResource MutedText}" TextAlignment="Center" Margin="0,8,0,18" FontSize="13"
+                         Text="Open a session on a PC/SC reader, or create a mock card to explore the whole API without hardware."/>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Connection" Click="Nav_Connection" Style="{StaticResource PrimaryButton}" MinWidth="120"/>
+                <Button Content="New mock card" Click="NewMock_Click" Margin="8,0,0,0" MinWidth="120"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Grid>
+    </Grid>
+
+    <GridSplitter x:Name="Splitter" Height="4" HorizontalAlignment="Stretch" VerticalAlignment="Center" ResizeDirection="Rows" ResizeBehavior="PreviousAndNext"/>
+
+    <!-- ===== Output ===== -->
+    <Grid x:Name="OutputPanel" Background="{DynamicResource OutputBackground}">
+      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <Border x:Name="OutputHeader" Padding="14,5,8,5" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1" Background="{DynamicResource Card}"
+              Cursor="SizeAll" ToolTip="Drag the header to dock the output top, bottom, left or right (or use View > Dock output)"
+              MouseLeftButtonDown="Header_MouseDown" MouseMove="Header_MouseMove" MouseLeftButtonUp="Header_MouseUp" LostMouseCapture="Header_LostCapture">
+        <Grid>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <WrapPanel VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Margin="0,2,14,2" VerticalAlignment="Center">
+              <TextBlock Text="&#xE76F;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource MutedForeground}" Margin="0,0,6,0"/>
+              <TextBlock Text="OUTPUT" Style="{StaticResource Eyebrow}" VerticalAlignment="Center"/>
+            </StackPanel>
+            <ToggleButton x:Name="FInfo" Style="{StaticResource ChipToggle}" Content="info" IsChecked="True" Margin="0,2,4,2" Click="Filter_Changed"/>
+            <ToggleButton x:Name="FOk" Style="{StaticResource ChipToggle}" Content="ok" IsChecked="True" Margin="0,2,4,2" Click="Filter_Changed"/>
+            <ToggleButton x:Name="FWarn" Style="{StaticResource ChipToggle}" Content="warn" IsChecked="True" Margin="0,2,4,2" Click="Filter_Changed"/>
+            <ToggleButton x:Name="FError" Style="{StaticResource ChipToggle}" Content="error" IsChecked="True" Margin="0,2,4,2" Click="Filter_Changed"/>
+            <ToggleButton x:Name="FData" Style="{StaticResource ChipToggle}" Content="data" IsChecked="True" Margin="0,2,4,2" Click="Filter_Changed"/>
+            <ToggleButton x:Name="FTrace" Style="{StaticResource ChipToggle}" Content="frames" IsChecked="True" Margin="0,2,12,2" Click="Filter_Changed"/>
+            <TextBox x:Name="SearchBox" Width="180" MinHeight="26" FontSize="12" Margin="0,2,0,2" TextChanged="Filter_Changed" ToolTip="Filter output lines"/>
+          </WrapPanel>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Margin="8,2,0,0">
+            <ToggleButton x:Name="ScrollLock" Style="{StaticResource ChipToggle}" Content="Follow" IsChecked="True" Margin="0,0,6,0" ToolTip="Scroll to the newest line"/>
+            <Button Style="{StaticResource IconButton}" ToolTip="Copy output (or the selection)" Click="CopyOutput_Click"><TextBlock Style="{StaticResource Icon}" Text="&#xE8C8;"/></Button>
+            <Button Style="{StaticResource IconButton}" ToolTip="Save output..." Click="SaveOutput_Click"><TextBlock Style="{StaticResource Icon}" Text="&#xE74E;"/></Button>
+            <Button Style="{StaticResource IconButton}" ToolTip="Clear (Ctrl+L)" Click="ClearOutput_Click"><TextBlock Style="{StaticResource Icon}" Text="&#xE74D;"/></Button>
+          </StackPanel>
+        </Grid>
+      </Border>
+      <RichTextBox x:Name="Out" Grid.Row="1" Style="{StaticResource OutputBox}">
+        <RichTextBox.Document><FlowDocument PagePadding="0"/></RichTextBox.Document>
+      </RichTextBox>
+    </Grid>
+
+    <!-- drop target preview while dragging the output header -->
+    <Border x:Name="DropHint" Visibility="Collapsed" IsHitTestVisible="False" Background="{DynamicResource PrimarySoft}"
+            BorderBrush="{DynamicResource Primary}" BorderThickness="2" CornerRadius="6" Margin="6"/>
+    </Grid>
+
+    <!-- ===== Status bar ===== -->
+    <Border Grid.Row="2" BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0" Padding="14,0" Height="28" Background="{DynamicResource Sidebar}">
+      <DockPanel>
+        <TextBlock DockPanel.Dock="Right" x:Name="StatusRight" Style="{StaticResource Eyebrow}" VerticalAlignment="Center"/>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{DynamicResource MutedForeground}" Margin="0,0,8,0"/>
+          <TextBlock x:Name="StatusText" Style="{StaticResource Mono}" FontSize="12"/>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+  </Grid>
+</Window>

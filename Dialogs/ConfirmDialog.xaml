@@ -1,0 +1,20 @@
+<Window Style="{StaticResource AppWindow}" x:Class="Tessera.Explorer.Dialogs.ConfirmDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Background="{DynamicResource Background}" FontFamily="{StaticResource FontSans}" FontSize="13"
+        SizeToContent="Height" Width="460" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        SourceInitialized="Window_SourceInitialized">
+  <Border Padding="24,22,24,20">
+    <StackPanel>
+      <StackPanel Orientation="Horizontal">
+        <TextBlock x:Name="Glyph" Text="&#xE7BA;" FontFamily="{StaticResource FontIcons}" FontSize="18" Foreground="{DynamicResource Destructive}" Margin="0,0,10,0" VerticalAlignment="Center"/>
+        <TextBlock x:Name="TitleText" Style="{StaticResource SectionTitle}" FontSize="17" VerticalAlignment="Center"/>
+      </StackPanel>
+      <TextBlock x:Name="Message" Style="{StaticResource MutedText}" FontSize="13" Margin="0,12,0,0" LineHeight="20"/>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,22,0,0">
+        <Button x:Name="CancelButton" Content="Cancel" IsCancel="True" MinWidth="84" Click="Cancel_Click"/>
+        <Button x:Name="OkButton" Margin="8,0,0,0" MinWidth="104" IsDefault="True" Click="Ok_Click" Style="{StaticResource DestructiveButton}"/>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</Window>

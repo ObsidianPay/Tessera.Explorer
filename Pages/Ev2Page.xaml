@@ -1,0 +1,111 @@
+<UserControl x:Class="Tessera.Explorer.Pages.Ev2Page"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Tessera.Explorer.Controls"
+             xmlns:nx="clr-namespace:Tessera.Nxpsc;assembly=Tessera.Nxpsc">
+  <ScrollViewer Style="{StaticResource PageScroll}">
+    <StackPanel MaxWidth="1040" HorizontalAlignment="Left">
+      <TabControl>
+        <TabItem Header="Transaction MAC">
+          <StackPanel>
+            <c:OpCard Title="CreateTransactionMACFile" Signature="card.CreateTransactionMacFile(fileNo, comm, access, NxpscKey tmKey, byte keyVersion)"
+                      Description="Creates the transaction MAC file in the selected application. The key's version byte is sent as the key version. On the mock, state the TM key first (Mock lab).">
+              <StackPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="160"/></Grid.ColumnDefinitions>
+                  <c:Field Label="File no (hex)"><TextBox x:Name="TmFile" Style="{StaticResource MonoTextBox}" Text="0F"/></c:Field>
+                  <c:Field Grid.Column="2" Label="Comm mode"><c:EnumBox x:Name="TmComm" EnumType="{x:Type nx:NxpscCommMode}"/></c:Field>
+                </Grid>
+                <c:AccessEditor x:Name="TmAccess" Margin="0,0,0,10"/>
+                <c:KeyEditor x:Name="TmKey" Label="Transaction MAC key (AES-128)"/>
+              </StackPanel>
+              <c:OpCard.Actions><Button Content="CreateTransactionMacFile" Style="{StaticResource PrimaryButton}" Click="CreateTmac_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="NotifyTransactionSuccess" Signature="card.NotifyTransactionSuccess()" Description="Tells the card a transaction completed (ECP capable readers).">
+              <c:OpCard.Actions><Button Content="Notify" Click="Notify_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <TextBlock Style="{StaticResource MutedText}" Text="CommitTransaction with MAC and CommitReaderID live on the Files page, Transaction tab. Verifying a MAC on the host is on Offline tools."/>
+          </StackPanel>
+        </TabItem>
+
+        <TabItem Header="Key sets">
+          <StackPanel>
+            <c:OpCard Title="InitializeKeySet" Signature="card.InitKeySet(byte keySet, NxpscKeyType keyType)"
+                      Description="Needs an application created with two or more key sets. The type must match the application's own key type.">
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="180"/></Grid.ColumnDefinitions>
+                <c:Field Label="Key set (hex)"><TextBox x:Name="InitSet" Style="{StaticResource MonoTextBox}" Text="01"/></c:Field>
+                <c:Field Grid.Column="2" Label="Key type"><c:EnumBox x:Name="InitType" EnumType="{x:Type nx:NxpscKeyType}"/></c:Field>
+              </Grid>
+              <c:OpCard.Actions><Button Content="InitKeySet" Click="InitSet_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="FinalizeKeySet" Signature="card.FinalizeKeySet(byte keySet, byte keySetVersion)">
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="120"/></Grid.ColumnDefinitions>
+                <c:Field Label="Key set (hex)"><TextBox x:Name="FinSet" Style="{StaticResource MonoTextBox}" Text="01"/></c:Field>
+                <c:Field Grid.Column="2" Label="Version (hex)"><TextBox x:Name="FinVer" Style="{StaticResource MonoTextBox}" Text="01"/></c:Field>
+              </Grid>
+              <c:OpCard.Actions><Button Content="FinalizeKeySet" Click="FinalizeSet_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="RollKeySet" Signature="card.RollKeySet(byte keySet)" Description="Makes the set active and ends the session.">
+              <c:Field Label="Key set (hex)" Width="120" HorizontalAlignment="Left"><TextBox x:Name="RollSet" Style="{StaticResource MonoTextBox}" Text="01"/></c:Field>
+              <c:OpCard.Actions><Button Content="RollKeySet" Click="RollSet_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+
+        <TabItem Header="Delegated apps">
+          <StackPanel>
+            <c:OpCard Title="CreateDelegatedApplication" Signature="card.CreateDelegatedApplication(aid, damSlot, damSlotVersion, quotaLimit, keySettings, numKeys, keyType, isoFid, dfName, encK, damMac)"
+                      Description="EncK and DAMMAC are produced by the DAM authority; see the card manual.">
+              <StackPanel>
+                <WrapPanel>
+                  <c:Field Label="AID (hex)" Width="110"><TextBox x:Name="DamAid" Style="{StaticResource MonoTextBox}" Text="654321"/></c:Field>
+                  <c:Field Label="DAM slot (hex)" Width="110"><TextBox x:Name="DamSlot" Style="{StaticResource MonoTextBox}" Text="0000"/></c:Field>
+                  <c:Field Label="Slot version" Width="100"><TextBox x:Name="DamSlotVer" Style="{StaticResource MonoTextBox}" Text="00"/></c:Field>
+                  <c:Field Label="Quota limit" Width="100"><TextBox x:Name="DamQuota" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                  <c:Field Label="Key settings" Width="100"><TextBox x:Name="DamKs" Style="{StaticResource MonoTextBox}" Text="0B"/></c:Field>
+                  <c:Field Label="Keys" Width="70"><TextBox x:Name="DamKeys" Style="{StaticResource MonoTextBox}" Text="1"/></c:Field>
+                  <c:Field Label="Key type" Width="160"><c:EnumBox x:Name="DamType" EnumType="{x:Type nx:NxpscKeyType}"/></c:Field>
+                  <c:Field Label="ISO FID" Width="90"><TextBox x:Name="DamFid" Style="{StaticResource MonoTextBox}" Text="0000"/></c:Field>
+                </WrapPanel>
+                <c:Field Label="DF name (hex or &quot;ascii&quot;)"><TextBox x:Name="DamName" Style="{StaticResource MonoTextBox}"/></c:Field>
+                <c:Field Label="EncK (hex)"><TextBox x:Name="DamEncK" Style="{StaticResource MonoTextBox}"/></c:Field>
+                <c:Field Label="DAMMAC (hex)"><TextBox x:Name="DamMac" Style="{StaticResource MonoTextBox}"/></c:Field>
+              </StackPanel>
+              <c:OpCard.Actions><Button Content="CreateDelegatedApplication" Style="{StaticResource PrimaryButton}" Click="CreateDam_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="GetDelegatedInfo" Signature="card.GetDelegatedInfo(ushort damSlot)">
+              <c:Field Label="DAM slot (hex)" Width="120" HorizontalAlignment="Left"><TextBox x:Name="InfoSlot" Style="{StaticResource MonoTextBox}" Text="0000"/></c:Field>
+              <c:OpCard.Actions><Button Content="GetDelegatedInfo" Click="DamInfo_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+
+        <TabItem Header="MIFARE Classic">
+          <StackPanel>
+            <c:OpCard Title="CreateMFCMapping" Signature="card.CreateMfcMapping(ReadOnlySpan&lt;byte&gt; payload)" Description="MIFARE Classic mapping of EV2 XL and EV3; payload per the card manual.">
+              <c:Field Label="Payload (hex)"><TextBox x:Name="MfcMap" Style="{StaticResource MonoTextBox}"/></c:Field>
+              <c:OpCard.Actions><Button Content="CreateMfcMapping" Click="MfcMap_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="RestrictMFCUpdate" OneWay="True" Signature="card.RestrictMfcUpdate(ReadOnlySpan&lt;byte&gt; payload)" Description="Restrictions cannot be lifted.">
+              <c:Field Label="Payload (hex)"><TextBox x:Name="MfcRestrict" Style="{StaticResource MonoTextBox}"/></c:Field>
+              <c:OpCard.Actions><Button Content="RestrictMfcUpdate" Style="{StaticResource DestructiveButton}" Click="MfcRestrict_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+
+        <TabItem Header="Proximity check">
+          <c:OpCard Title="ProximityCheck" Signature="card.ProximityCheck(NxpscKey pcKey, byte rounds)"
+                    Description="The relay attack countermeasure. Rounds 1 to 8. Fails when the card's answer MAC does not verify.">
+            <StackPanel>
+              <c:Field Label="Rounds (1-8)" Width="120" HorizontalAlignment="Left"><TextBox x:Name="PcRounds" Style="{StaticResource MonoTextBox}" Text="1"/></c:Field>
+              <c:KeyEditor x:Name="PcKey" Label="Proximity check key"/>
+            </StackPanel>
+            <c:OpCard.Actions><Button Content="ProximityCheck" Style="{StaticResource PrimaryButton}" Click="Proximity_Click"/></c:OpCard.Actions>
+          </c:OpCard>
+        </TabItem>
+      </TabControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

@@ -1,0 +1,154 @@
+<UserControl x:Class="Tessera.Explorer.Pages.ApplicationsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Tessera.Explorer.Controls"
+             xmlns:nx="clr-namespace:Tessera.Nxpsc;assembly=Tessera.Nxpsc">
+  <ScrollViewer Style="{StaticResource PageScroll}">
+    <StackPanel MaxWidth="1040" HorizontalAlignment="Left">
+      <TabControl>
+        <!-- ================= list ================= -->
+        <TabItem Header="Applications">
+          <StackPanel>
+            <c:OpCard Title="Application list" Signature="card.GetApplicationIds()  /  card.GetDfNames()"
+                      Description="Needs the PICC selected (and, depending on the PICC key settings, authenticated). Double-click a row to select that application.">
+              <Border BorderBrush="{DynamicResource Border}" BorderThickness="1" CornerRadius="6" MinHeight="120">
+                <DataGrid x:Name="AppGrid" MouseDoubleClick="AppGrid_DoubleClick" MaxHeight="320">
+                  <DataGrid.Columns>
+                    <DataGridTextColumn Header="AID" Binding="{Binding Aid}" Width="90"/>
+                    <DataGridTextColumn Header="ISO FID" Binding="{Binding IsoFid}" Width="80"/>
+                    <DataGridTextColumn Header="DF NAME" Binding="{Binding DfName}" Width="2*"/>
+                    <DataGridTextColumn Header="KEY SETTINGS" Binding="{Binding KeySettings}" Width="110"/>
+                    <DataGridTextColumn Header="KEYS" Binding="{Binding Keys}" Width="60"/>
+                    <DataGridTextColumn Header="KEY TYPE" Binding="{Binding KeyType}" Width="110"/>
+                  </DataGrid.Columns>
+                </DataGrid>
+              </Border>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="Refresh" Style="{StaticResource PrimaryButton}" Click="Refresh_Click"/>
+                  <Button Content="Select" Margin="8,0,0,0" Click="SelectRow_Click"/>
+                  <Button Content="Delete" Margin="8,0,0,0" Click="DeleteRow_Click" ToolTip="DeleteApplication on the selected row (needs the PICC master key or the application master key)"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="DeleteApplication" Signature="card.DeleteApplication(uint aid)">
+              <c:Field Label="AID (hex)" Width="220" HorizontalAlignment="Left"><TextBox x:Name="DeleteAid" Style="{StaticResource MonoTextBox}" Text="123456"/></c:Field>
+              <c:OpCard.Actions><Button Content="DeleteApplication" Style="{StaticResource DestructiveButton}" Click="Delete_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+
+        <!-- ================= create ================= -->
+        <TabItem Header="Create">
+          <StackPanel>
+            <c:OpCard Title="CreateApplication" Signature="card.CreateApplication(aid, keySettings, numKeys, keyType)  /  CreateApplicationIso(aid, ..., isoFid, dfName)"
+                      Description="Needs a PICC master key session unless the PICC allows free creation. With an ISO file id and DF name the ISO form is sent.">
+              <StackPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="140"/><ColumnDefinition Width="12"/><ColumnDefinition Width="140"/><ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="100"/><ColumnDefinition Width="12"/><ColumnDefinition Width="180"/>
+                  </Grid.ColumnDefinitions>
+                  <c:Field Label="AID (hex)"><TextBox x:Name="CreAid" Style="{StaticResource MonoTextBox}" Text="123456"/></c:Field>
+                  <c:Field Grid.Column="2" Label="Key settings (hex)"><TextBox x:Name="CreKs" Style="{StaticResource MonoTextBox}" Text="0B"/></c:Field>
+                  <c:Field Grid.Column="4" Label="Keys (1-14)"><TextBox x:Name="CreKeys" Style="{StaticResource MonoTextBox}" Text="3"/></c:Field>
+                  <c:Field Grid.Column="6" Label="Key type"><c:EnumBox x:Name="CreType" EnumType="{x:Type nx:NxpscKeyType}"/></c:Field>
+                </Grid>
+                <CheckBox x:Name="CreIso" Content="ISO file id and DF name" Click="CreIso_Click" Margin="0,2,0,8"/>
+                <Grid x:Name="CreIsoGrid" Visibility="Collapsed">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <c:Field Label="ISO FID (hex)"><TextBox x:Name="CreFid" Style="{StaticResource MonoTextBox}" Text="E110"/></c:Field>
+                  <c:Field Grid.Column="2" Label="DF name (hex, or &quot;ascii&quot;, up to 16 bytes)"><TextBox x:Name="CreDfName" Style="{StaticResource MonoTextBox}" Text="&quot;TESSERA&quot;"/></c:Field>
+                </Grid>
+              </StackPanel>
+              <c:OpCard.Actions><Button Content="CreateApplication" Style="{StaticResource PrimaryButton}" Click="Create_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+
+            <c:OpCard Title="CreateApplication (full config)" Signature="card.CreateApplication(uint aid, NxpscApplicationConfig config)"
+                      Description="The whole CreateApplication payload including key sets (EV2 and later). Key sets are used when the set count is 2 or more.">
+              <StackPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="90"/><ColumnDefinition Width="12"/><ColumnDefinition Width="180"/>
+                  </Grid.ColumnDefinitions>
+                  <c:Field Label="AID (hex)"><TextBox x:Name="CfgAid" Style="{StaticResource MonoTextBox}" Text="123456"/></c:Field>
+                  <c:Field Grid.Column="2" Label="KeySettings1"><TextBox x:Name="CfgKs" Style="{StaticResource MonoTextBox}" Text="0B"/></c:Field>
+                  <c:Field Grid.Column="4" Label="Keys"><TextBox x:Name="CfgKeys" Style="{StaticResource MonoTextBox}" Text="3"/></c:Field>
+                  <c:Field Grid.Column="6" Label="Key type"><c:EnumBox x:Name="CfgType" EnumType="{x:Type nx:NxpscKeyType}"/></c:Field>
+                </Grid>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="90"/><ColumnDefinition Width="12"/><ColumnDefinition Width="180"/>
+                  </Grid.ColumnDefinitions>
+                  <c:Field Label="Key sets (0 or 2-16)"><TextBox x:Name="CfgSets" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                  <c:Field Grid.Column="2" Label="AKS version"><TextBox x:Name="CfgAks" Style="{StaticResource MonoTextBox}" Text="00"/></c:Field>
+                  <c:Field Grid.Column="4" Label="Max key size"><TextBox x:Name="CfgMaxKey" Style="{StaticResource MonoTextBox}" Text="16"/></c:Field>
+                  <c:Field Grid.Column="6" Label="AppKeySetSett (0-7)"><TextBox x:Name="CfgSetSett" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                </Grid>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <c:Field Label="ISO FID (hex)"><TextBox x:Name="CfgFid" Style="{StaticResource MonoTextBox}"/></c:Field>
+                  <c:Field Grid.Column="2" Label="DF name (hex or &quot;ascii&quot;, optional)"><TextBox x:Name="CfgDfName" Style="{StaticResource MonoTextBox}"/></c:Field>
+                </Grid>
+                <WrapPanel>
+                  <CheckBox x:Name="CfgIsoOn" Content="ISO FID enabled" Margin="0,2,18,2"/>
+                  <CheckBox x:Name="CfgVc" Content="Specific VC keys" Margin="0,2,18,2"/>
+                  <CheckBox x:Name="CfgCap" Content="Specific capability data" Margin="0,2,18,2"/>
+                </WrapPanel>
+              </StackPanel>
+              <c:OpCard.Actions><Button Content="CreateApplication (config)" Style="{StaticResource PrimaryButton}" Click="CreateCfg_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+
+        <!-- ================= PICC ================= -->
+        <TabItem Header="PICC">
+          <StackPanel>
+            <c:OpCard Title="FormatPICC" OneWay="True" Signature="card.FormatPicc()"
+                      Description="Deletes every application and file and reclaims the memory. The PICC master key is kept. Needs a PICC master key session. Impossible once format is disabled.">
+              <c:OpCard.Actions><Button Content="FormatPICC" Style="{StaticResource DestructiveButton}" Click="Format_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+
+            <c:OpCard Title="SetConfiguration: PICC flags" OneWay="True" Signature="card.SetPiccConfig(NxpscPiccConfig config)  /  SetPiccConfig(bool disableFormat, bool randomUid)"
+                      Description="Option 0x00. All four flags are written at once, so keep the ones you do not mean to change. Disabling format and enabling random UID are one-way on most cards.">
+              <WrapPanel>
+                <CheckBox x:Name="CfgDisableFormat" Content="Disable format" Margin="0,2,18,2"/>
+                <CheckBox x:Name="CfgRandomUid" Content="Random UID" Margin="0,2,18,2"/>
+                <CheckBox x:Name="CfgPcMandatory" Content="Proximity check mandatory" Margin="0,2,18,2"/>
+                <CheckBox x:Name="CfgAuthVc" Content="VC authentication mandatory" Margin="0,2,18,2"/>
+              </WrapPanel>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="SetPiccConfig (4 flags)" Style="{StaticResource DestructiveButton}" Click="SetPiccConfig_Click"/>
+                  <Button Content="SetPiccConfig (2 flags)" Margin="8,0,0,0" Click="SetPiccConfig2_Click" ToolTip="Writes zero into the proximity check and virtual card flags"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+
+            <c:OpCard Title="SetDefaultKey" Signature="card.SetDefaultKey(NxpscKey key)" Description="The key new applications' keys are initialised to.">
+              <c:KeyEditor x:Name="DefaultKey"/>
+              <c:OpCard.Actions><Button Content="SetDefaultKey" Click="SetDefaultKey_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+
+            <c:OpCard Title="SetATS" Signature="card.SetAts(ReadOnlySpan&lt;byte&gt; ats)" Description="Replaces the card's ATS.">
+              <c:Field Label="ATS (hex)"><TextBox x:Name="AtsBox" Style="{StaticResource MonoTextBox}"/></c:Field>
+              <c:OpCard.Actions><Button Content="SetAts" Click="SetAts_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+
+            <c:OpCard Title="SetConfiguration (raw)" OneWay="True" Signature="card.SetConfiguration(byte option, ReadOnlySpan&lt;byte&gt; data)"
+                      Description="Any option with any payload, for options the typed wrappers do not cover. Some options are one-way.">
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <c:Field Label="Option (hex)"><TextBox x:Name="RawOption" Style="{StaticResource MonoTextBox}" Text="00"/></c:Field>
+                <c:Field Grid.Column="2" Label="Payload (hex)"><TextBox x:Name="RawPayload" Style="{StaticResource MonoTextBox}"/></c:Field>
+              </Grid>
+              <c:OpCard.Actions><Button Content="SetConfiguration" Style="{StaticResource DestructiveButton}" Click="SetConfig_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+      </TabControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

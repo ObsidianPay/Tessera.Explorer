@@ -1,0 +1,96 @@
+<UserControl x:Class="Tessera.Explorer.Pages.KeysPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Tessera.Explorer.Controls"
+             xmlns:nx="clr-namespace:Tessera.Nxpsc;assembly=Tessera.Nxpsc">
+  <ScrollViewer Style="{StaticResource PageScroll}">
+    <StackPanel MaxWidth="1040" HorizontalAlignment="Left">
+
+      <c:OpCard Title="SelectApplication" Signature="card.SelectApplication(uint aid)"
+                Description="Selects an application (AID 000000 is the PICC itself). Drops any authentication.">
+        <c:Field Label="AID (hex, 3 bytes)" Width="220" HorizontalAlignment="Left">
+          <TextBox x:Name="SelectAid" Style="{StaticResource MonoTextBox}" Text="000000"/>
+        </c:Field>
+        <c:OpCard.Actions>
+          <StackPanel Orientation="Horizontal">
+            <Button Content="Select" Style="{StaticResource PrimaryButton}" Click="Select_Click"/>
+            <Button Content="Select PICC" Margin="8,0,0,0" Click="SelectPicc_Click"/>
+          </StackPanel>
+        </c:OpCard.Actions>
+      </c:OpCard>
+
+      <c:OpCard Title="Authenticate" Signature="card.Authenticate(byte keyNo, NxpscKey key, NxpscChannel channel)  /  AuthenticateNonFirst(keyNo, key)"
+                Description="Opens the secure channel. Channel Auto picks from card type and key type. NonFirst continues an EV2 session with another key.">
+        <StackPanel>
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+            <c:Field Label="Key no (hex)"><TextBox x:Name="AuthKeyNo" Style="{StaticResource MonoTextBox}" Text="00"/></c:Field>
+            <c:Field Grid.Column="2" Label="Channel"><c:EnumBox x:Name="AuthChannel" EnumType="{x:Type nx:NxpscChannel}"/></c:Field>
+          </Grid>
+          <c:KeyEditor x:Name="AuthKey" Label="Key"/>
+        </StackPanel>
+        <c:OpCard.Actions>
+          <StackPanel Orientation="Horizontal">
+            <Button Content="Authenticate" Style="{StaticResource PrimaryButton}" Click="Auth_Click"/>
+            <Button Content="AuthenticateNonFirst" Margin="8,0,0,0" Click="AuthNonFirst_Click"/>
+            <Button Content="Factory PICC key" Margin="8,0,0,0" Click="FactoryPicc_Click" ToolTip="2K3DES, 16 zero bytes, key 0"/>
+            <Button Content="Factory AES key" Margin="8,0,0,0" Click="FactoryAes_Click" ToolTip="AES-128, 16 zero bytes"/>
+          </StackPanel>
+        </c:OpCard.Actions>
+      </c:OpCard>
+
+      <c:OpCard Title="ChangeKey / ChangeKeyEV2" Signature="card.ChangeKey(byte keyNo, NxpscKey oldKey, NxpscKey newKey)  /  ChangeKeyEv2(keySet, keyNo, old, new)"
+                Description="Changing the key the session was built on ends the session; select and authenticate again to prove it. The mock card cannot check the cryptogram: declare the result on the Mock lab page first.">
+        <StackPanel>
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="120"/></Grid.ColumnDefinitions>
+            <c:Field Label="Key no (hex)"><TextBox x:Name="ChKeyNo" Style="{StaticResource MonoTextBox}" Text="00"/></c:Field>
+            <c:Field Grid.Column="2" Label="Key set (EV2)"><TextBox x:Name="ChKeySet" Style="{StaticResource MonoTextBox}" Text="00"/></c:Field>
+          </Grid>
+          <c:KeyEditor x:Name="OldKey" Label="Old key" Margin="0,0,0,12"/>
+          <c:KeyEditor x:Name="NewKey" Label="New key (type and version are loaded with it)"/>
+        </StackPanel>
+        <c:OpCard.Actions>
+          <StackPanel Orientation="Horizontal">
+            <Button Content="ChangeKey" Style="{StaticResource PrimaryButton}" Click="ChangeKey_Click"/>
+            <Button Content="ChangeKeyEV2" Margin="8,0,0,0" Click="ChangeKeyEv2_Click"/>
+          </StackPanel>
+        </c:OpCard.Actions>
+      </c:OpCard>
+
+      <c:OpCard Title="Key versions" Signature="card.GetKeyVersion(byte keyNo)" Description="Version byte of one key of the selected application.">
+        <c:Field Label="Key no (hex)" Width="120" HorizontalAlignment="Left"><TextBox x:Name="VerKeyNo" Style="{StaticResource MonoTextBox}" Text="00"/></c:Field>
+        <c:OpCard.Actions>
+          <StackPanel Orientation="Horizontal">
+            <Button Content="GetKeyVersion" Click="GetKeyVersion_Click"/>
+            <Button Content="All keys" Margin="8,0,0,0" Click="AllKeyVersions_Click" ToolTip="GetKeySettings for the count, then GetKeyVersion for each"/>
+          </StackPanel>
+        </c:OpCard.Actions>
+      </c:OpCard>
+
+      <c:OpCard Title="Key settings" OneWay="True" Signature="card.GetKeySettings()  /  card.ChangeKeySettings(byte keySettings)"
+                Description="KeySettings1: bit 0 master key changeable, bit 1 free directory listing, bit 2 free create/delete, bit 3 configuration changeable; high nibble = key needed to change keys (0 master, E same key, F frozen). Clearing the changeable bits cannot be undone.">
+        <StackPanel>
+          <WrapPanel>
+            <CheckBox x:Name="Ks0" Content="Master key changeable" Margin="0,2,18,2" IsChecked="True" Click="Ks_Changed"/>
+            <CheckBox x:Name="Ks1" Content="Free directory list" Margin="0,2,18,2" IsChecked="True" Click="Ks_Changed"/>
+            <CheckBox x:Name="Ks2" Content="Free create/delete" Margin="0,2,18,2" Click="Ks_Changed"/>
+            <CheckBox x:Name="Ks3" Content="Configuration changeable" Margin="0,2,18,2" IsChecked="True" Click="Ks_Changed"/>
+          </WrapPanel>
+          <Grid Margin="0,8,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="12"/><ColumnDefinition Width="140"/></Grid.ColumnDefinitions>
+            <c:Field Label="Key to change keys"><ComboBox x:Name="KsAccess" SelectionChanged="Ks_Selection"/></c:Field>
+            <c:Field Grid.Column="2" Label="Raw byte (hex)"><TextBox x:Name="KsRaw" Style="{StaticResource MonoTextBox}" TextChanged="KsRaw_Changed"/></c:Field>
+          </Grid>
+          <TextBlock x:Name="KsBits" Style="{StaticResource Mono}" Foreground="{DynamicResource MutedForeground}" FontSize="11"/>
+        </StackPanel>
+        <c:OpCard.Actions>
+          <StackPanel Orientation="Horizontal">
+            <Button Content="GetKeySettings" Click="GetKeySettings_Click"/>
+            <Button Content="ChangeKeySettings" Style="{StaticResource DestructiveButton}" Margin="8,0,0,0" Click="ChangeKeySettings_Click"/>
+          </StackPanel>
+        </c:OpCard.Actions>
+      </c:OpCard>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

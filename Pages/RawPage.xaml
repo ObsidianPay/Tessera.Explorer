@@ -1,0 +1,37 @@
+<UserControl x:Class="Tessera.Explorer.Pages.RawPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Tessera.Explorer.Controls"
+             xmlns:nx="clr-namespace:Tessera.Nxpsc;assembly=Tessera.Nxpsc">
+  <ScrollViewer Style="{StaticResource PageScroll}">
+    <StackPanel MaxWidth="1040" HorizontalAlignment="Left">
+      <c:OpCard Title="Command" Signature="card.Command(byte command, ReadOnlySpan&lt;byte&gt; data, NxpscCommMode txMode, NxpscCommMode rxMode, int responseCapacity)"
+                Description="Sends any native DESFire command through the active secure channel. The answer excludes the status byte, which is read back from LastStatus. Turn on frame tracing (Ctrl+T) to see the wire bytes.">
+        <StackPanel>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="150"/><ColumnDefinition Width="12"/>
+              <ColumnDefinition Width="150"/><ColumnDefinition Width="12"/><ColumnDefinition Width="120"/>
+            </Grid.ColumnDefinitions>
+            <c:Field Label="Command (hex)"><TextBox x:Name="Cmd" Style="{StaticResource MonoTextBox}" Text="60"/></c:Field>
+            <c:Field Grid.Column="2" Label="Send as"><c:EnumBox x:Name="TxMode" EnumType="{x:Type nx:NxpscCommMode}"/></c:Field>
+            <c:Field Grid.Column="4" Label="Receive as"><c:EnumBox x:Name="RxMode" EnumType="{x:Type nx:NxpscCommMode}"/></c:Field>
+            <c:Field Grid.Column="6" Label="Capacity"><TextBox x:Name="Capacity" Style="{StaticResource MonoTextBox}" Text="4096"/></c:Field>
+          </Grid>
+          <c:Field Label="Data (hex or &quot;ascii&quot;)"><TextBox x:Name="Data" Style="{StaticResource MultilineTextBox}"/></c:Field>
+        </StackPanel>
+        <c:OpCard.Actions>
+          <StackPanel Orientation="Horizontal">
+            <Button Content="Send" Style="{StaticResource PrimaryButton}" Click="Send_Click" MinWidth="90"/>
+            <Button Content="GetVersion (60)" Margin="8,0,0,0" Click="Preset_Version" ToolTip="Command 0x60, no data, plain"/>
+            <Button Content="GetApplicationIDs (6A)" Margin="8,0,0,0" Click="Preset_AppIds"/>
+            <Button Content="GetFreeMem (6E)" Margin="8,0,0,0" Click="Preset_Free"/>
+          </StackPanel>
+        </c:OpCard.Actions>
+      </c:OpCard>
+      <c:OpCard Title="Last status" Description="The DESFire status byte of the last card answer is also shown in the status bar and on the Connection page.">
+        <TextBlock x:Name="LastStatusText" Style="{StaticResource Mono}" FontSize="13"/>
+      </c:OpCard>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

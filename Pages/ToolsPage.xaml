@@ -1,0 +1,130 @@
+<UserControl x:Class="Tessera.Explorer.Pages.ToolsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Tessera.Explorer.Controls"
+             xmlns:nx="clr-namespace:Tessera.Nxpsc;assembly=Tessera.Nxpsc">
+  <ScrollViewer Style="{StaticResource PageScroll}">
+    <StackPanel MaxWidth="1040" HorizontalAlignment="Left">
+      <TabControl>
+        <!-- ===================== AN10922 ===================== -->
+        <TabItem Header="AN10922">
+          <c:OpCard Title="Key diversification" Signature="NxpscLibrary.DiversifyAn10922(NxpscKey master, ReadOnlySpan&lt;byte&gt; input, byte derivedVersion)"
+                    Description="The derived key keeps the master key's type. Input excludes the padding constant (at most 31 bytes), typically UID || AID || system identifier. The derived key is shown here, not written to the output.">
+            <StackPanel>
+              <c:KeyEditor x:Name="MasterKey" Label="Master key" Margin="0,0,0,12"/>
+              <c:Field Label="Diversification input (hex)"><TextBox x:Name="DivInput" Style="{StaticResource MonoTextBox}" Text="04A1B2C3D4E5F6123456"/></c:Field>
+              <c:Field Label="Derived key version (hex)" Width="160" HorizontalAlignment="Left"><TextBox x:Name="DivVersion" Style="{StaticResource MonoTextBox}" Text="00"/></c:Field>
+              <c:Field Label="Derived key">
+                <TextBox x:Name="DerivedKey" Style="{StaticResource MonoTextBox}" IsReadOnly="True"/>
+              </c:Field>
+            </StackPanel>
+            <c:OpCard.Actions>
+              <StackPanel Orientation="Horizontal">
+                <Button Content="Diversify" Style="{StaticResource PrimaryButton}" Click="Diversify_Click"/>
+                <Button Content="Copy derived key" Margin="8,0,0,0" Click="CopyDerived_Click"/>
+                <Button Content="AN10922 example master" Margin="8,0,0,0" Click="Example_Click" ToolTip="Loads the master key from the AN10922 AES-128 example"/>
+              </StackPanel>
+            </c:OpCard.Actions>
+          </c:OpCard>
+        </TabItem>
+
+        <!-- ===================== access rights ===================== -->
+        <TabItem Header="Access rights">
+          <c:OpCard Title="Pack and unpack" Signature="NxpscLibrary.PackAccess(access)  /  UnpackAccess(ushort raw)"
+                    Description="read &lt;&lt; 12 | write &lt;&lt; 8 | read-write &lt;&lt; 4 | change.">
+            <StackPanel>
+              <c:AccessEditor x:Name="PackAccess"/>
+              <c:Field Label="Packed (hex)" Width="160" HorizontalAlignment="Left" Margin="0,10,0,0"><TextBox x:Name="PackedBox" Style="{StaticResource MonoTextBox}" Text="0000"/></c:Field>
+            </StackPanel>
+            <c:OpCard.Actions>
+              <StackPanel Orientation="Horizontal">
+                <Button Content="Pack" Style="{StaticResource PrimaryButton}" Click="Pack_Click"/>
+                <Button Content="Unpack into editor" Margin="8,0,0,0" Click="Unpack_Click"/>
+              </StackPanel>
+            </c:OpCard.Actions>
+          </c:OpCard>
+        </TabItem>
+
+        <!-- ===================== SDM ===================== -->
+        <TabItem Header="SDM payload">
+          <c:OpCard Title="BuildSdmSettings" Signature="NxpscLibrary.BuildSdmSettings(comm, access, NxpscSdmSettings sdm)"
+                    Description="The ChangeFileSettings payload ConfigureSdm would send, built without a card.">
+            <StackPanel>
+              <c:Field Label="Comm mode" Width="160" HorizontalAlignment="Left"><c:EnumBox x:Name="SdmComm" EnumType="{x:Type nx:NxpscCommMode}"/></c:Field>
+              <c:AccessEditor x:Name="SdmAccess" Margin="0,0,0,12"/>
+              <c:SdmEditor x:Name="Sdm"/>
+            </StackPanel>
+            <c:OpCard.Actions><Button Content="Build" Style="{StaticResource PrimaryButton}" Click="BuildSdm_Click"/></c:OpCard.Actions>
+          </c:OpCard>
+        </TabItem>
+
+        <!-- ===================== TMAC ===================== -->
+        <TabItem Header="Transaction MAC">
+          <StackPanel>
+            <TextBlock Style="{StaticResource MutedText}" Margin="0,0,0,12"
+                       Text="The back office side: only the holder of the transaction MAC key can tell a genuine transaction from a terminal's invention. NXP publish no vectors for this construction; prove it against silicon before trusting it."/>
+            <c:OpCard Title="BuildWriteRecordTmi" Signature="NxpscTmac.BuildWriteRecordTmi(byte fileNo, uint offset, ReadOnlySpan&lt;byte&gt; data)"
+                      Description="The input a card accumulates for one WriteRecord. Build it from the record you expected to be written, never from bytes a terminal reports.">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                  <c:Field Label="File no (hex)" Width="110"><TextBox x:Name="TmiFile" Style="{StaticResource MonoTextBox}" Text="01"/></c:Field>
+                  <c:Field Label="Offset" Width="110"><TextBox x:Name="TmiOffset" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                </StackPanel>
+                <c:Field Label="Record (hex or &quot;ascii&quot;)"><TextBox x:Name="TmiRecord" Style="{StaticResource MultilineTextBox}"/></c:Field>
+              </StackPanel>
+              <c:OpCard.Actions><Button Content="Build TMI" Click="BuildTmi_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="Compute / Verify" Signature="NxpscTmac.Compute(tmKey, uid, tmc, tmi)  /  NxpscTmac.Verify(tmKey, uid, TransactionMac reported, tmi)"
+                      Description="Compute the 8-byte value for a transaction, or check the one a card reported (constant time). A mismatch is a refusal, never a retry.">
+              <StackPanel>
+                <c:KeyEditor x:Name="TmKey" Label="Transaction MAC key (AES-128)" Margin="0,0,0,10"/>
+                <WrapPanel>
+                  <c:Field Label="UID (hex, 7 bytes)" Width="190"><TextBox x:Name="TmUid" Style="{StaticResource MonoTextBox}" Text="04A1B2C3D4E5F6"/></c:Field>
+                  <c:Field Label="TMC (hex, 4 bytes, as reported)" Width="200"><TextBox x:Name="TmTmc" Style="{StaticResource MonoTextBox}" Text="01000000"/></c:Field>
+                  <c:Field Label="TMV reported (hex, 8 bytes, verify)" Width="240"><TextBox x:Name="TmTmv" Style="{StaticResource MonoTextBox}"/></c:Field>
+                </WrapPanel>
+                <c:Field Label="TMI (hex)"><TextBox x:Name="TmTmi" Style="{StaticResource MultilineTextBox}"/></c:Field>
+              </StackPanel>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="Compute" Style="{StaticResource PrimaryButton}" Click="TmCompute_Click"/>
+                  <Button Content="Verify" Margin="8,0,0,0" Click="TmVerify_Click"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+
+        <!-- ===================== lookups ===================== -->
+        <TabItem Header="Lookups">
+          <StackPanel>
+            <c:OpCard Title="Status byte" Signature="NxpscLibrary.StatusText(byte status)">
+              <StackPanel Orientation="Horizontal">
+                <c:Field Label="Status (hex)" Width="120"><TextBox x:Name="LookStatus" Style="{StaticResource MonoTextBox}" Text="AE"/></c:Field>
+                <Button Content="Look up" Click="LookStatus_Click" Margin="8,18,0,0"/>
+                <Button Content="List all named statuses" Click="ListStatuses_Click" Margin="8,18,0,0"/>
+              </StackPanel>
+            </c:OpCard>
+            <c:OpCard Title="Error code" Signature="NxpscLibrary.ErrorText(NxpscErrorCode code)">
+              <c:OpCard.Actions><Button Content="List error codes" Click="ListErrors_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="Card type from GetVersion" Signature="NxpscLibrary.CardTypeFromVersion(byte type, byte major, byte minor)"
+                      Description="libnxpsc's product table applied to the hardware type and version bytes.">
+              <StackPanel Orientation="Horizontal">
+                <c:Field Label="HW type (hex)" Width="110"><TextBox x:Name="LookHwType" Style="{StaticResource MonoTextBox}" Text="01"/></c:Field>
+                <c:Field Label="Major (hex)" Width="110"><TextBox x:Name="LookMajor" Style="{StaticResource MonoTextBox}" Text="33"/></c:Field>
+                <c:Field Label="Minor (hex)" Width="110"><TextBox x:Name="LookMinor" Style="{StaticResource MonoTextBox}" Text="00"/></c:Field>
+              </StackPanel>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="Identify" Click="LookCard_Click"/>
+                  <Button Content="Key sizes" Margin="8,0,0,0" Click="KeySizes_Click" ToolTip="NxpscLibrary.KeySize and KeyTypeName for every key type"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+      </TabControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

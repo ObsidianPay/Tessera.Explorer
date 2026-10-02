@@ -1,0 +1,102 @@
+<UserControl x:Class="Tessera.Explorer.Pages.PlusPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Tessera.Explorer.Controls">
+  <ScrollViewer Style="{StaticResource PageScroll}">
+    <StackPanel MaxWidth="1040" HorizontalAlignment="Left">
+      <TextBlock Style="{StaticResource MutedText}" Margin="0,0,0,12"
+                 Text="MIFARE Plus EV1 / EV2, security level 3. Block numbers use MIFARE Plus addressing; key numbers are the AES key block addresses (0x4000 + n for data sectors)."/>
+      <TabControl>
+        <TabItem Header="Authenticate and read/write">
+          <StackPanel>
+            <c:OpCard Title="PlusAuthenticate" Signature="card.PlusAuthenticate(ushort keyBlock, NxpscKey key, bool first)"
+                      Description="First authentication starts a session; a following one continues it. PlusResetAuth ends it on the card as well.">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                  <c:Field Label="Key block (hex)" Width="140"><TextBox x:Name="AuthBlock" Style="{StaticResource MonoTextBox}" Text="4000"/></c:Field>
+                  <CheckBox x:Name="AuthFirst" Content="First authentication" IsChecked="True" Margin="12,6,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <c:KeyEditor x:Name="PlusKey" Label="AES key"/>
+              </StackPanel>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="PlusAuthenticate" Style="{StaticResource PrimaryButton}" Click="Auth_Click"/>
+                  <Button Content="PlusResetAuth" Margin="8,0,0,0" Click="ResetAuth_Click"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="PlusRead / PlusWrite" Signature="card.PlusRead(ushort block, byte count, bool encrypted, bool maced)  /  PlusWrite(block, data, encrypted)">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                  <c:Field Label="Block (hex)" Width="120"><TextBox x:Name="RwBlock" Style="{StaticResource MonoTextBox}" Text="0004"/></c:Field>
+                  <c:Field Label="Blocks to read" Width="120"><TextBox x:Name="RwCount" Style="{StaticResource MonoTextBox}" Text="1"/></c:Field>
+                </StackPanel>
+                <WrapPanel>
+                  <CheckBox x:Name="RwEnc" Content="Encrypted" IsChecked="True" Margin="0,2,18,2"/>
+                  <CheckBox x:Name="RwMac" Content="MACed (read responses)" IsChecked="True" Margin="0,2,18,2"/>
+                </WrapPanel>
+                <c:Field Label="Data to write (hex, 16 bytes per block)" Margin="0,8,0,0"><TextBox x:Name="RwData" Style="{StaticResource MonoTextBox}"/></c:Field>
+              </StackPanel>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="PlusRead" Style="{StaticResource PrimaryButton}" Click="Read_Click"/>
+                  <Button Content="PlusWrite" Margin="8,0,0,0" Click="Write_Click"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+
+        <TabItem Header="Value blocks">
+          <c:OpCard Title="Value operations" Signature="PlusValueOperation(block, delta, credit, encrypted)  /  PlusTransfer(block)  /  PlusValueTransfer(...)  /  PlusRestore(block)"
+                    Description="Increment (credit) or decrement a value block into the transfer buffer, then transfer. ValueTransfer does both in one command; Restore copies a block into the transfer buffer.">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <c:Field Label="Block (hex)" Width="120"><TextBox x:Name="ValBlock" Style="{StaticResource MonoTextBox}" Text="0004"/></c:Field>
+                <c:Field Label="Delta" Width="120"><TextBox x:Name="ValDelta" Style="{StaticResource MonoTextBox}" Text="1"/></c:Field>
+              </StackPanel>
+              <WrapPanel>
+                <CheckBox x:Name="ValCredit" Content="Credit (off = debit)" IsChecked="True" Margin="0,2,18,2"/>
+                <CheckBox x:Name="ValEnc" Content="Encrypted" IsChecked="True" Margin="0,2,18,2"/>
+              </WrapPanel>
+            </StackPanel>
+            <c:OpCard.Actions>
+              <WrapPanel>
+                <Button Content="ValueOperation" Click="ValOp_Click" Margin="0,0,8,0"/>
+                <Button Content="Transfer" Click="Transfer_Click" Margin="0,0,8,0"/>
+                <Button Content="ValueTransfer" Style="{StaticResource PrimaryButton}" Click="ValTransfer_Click" Margin="0,0,8,0"/>
+                <Button Content="Restore" Click="Restore_Click"/>
+              </WrapPanel>
+            </c:OpCard.Actions>
+          </c:OpCard>
+        </TabItem>
+
+        <TabItem Header="Personalisation">
+          <StackPanel>
+            <c:OpCard Title="WritePerso" Signature="card.PlusWritePerso(ushort block, ReadOnlySpan&lt;byte&gt; data)" Description="Security level 0: loads keys and data.">
+              <StackPanel Orientation="Horizontal">
+                <c:Field Label="Block (hex)" Width="120"><TextBox x:Name="PersoBlock" Style="{StaticResource MonoTextBox}" Text="4000"/></c:Field>
+                <c:Field Label="Data (hex, 16 bytes)" Width="420"><TextBox x:Name="PersoData" Style="{StaticResource MonoTextBox}"/></c:Field>
+              </StackPanel>
+              <c:OpCard.Actions><Button Content="PlusWritePerso" Click="WritePerso_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="CommitPerso" OneWay="True" Signature="card.PlusCommitPerso()" Description="Leaves security level 0.">
+              <c:OpCard.Actions><Button Content="PlusCommitPerso" Style="{StaticResource DestructiveButton}" Click="CommitPerso_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="SetConfigSL1" Signature="card.PlusSetConfigSl1(ReadOnlySpan&lt;byte&gt; payload)" Description="Security level 1 configuration; payload per the card manual.">
+              <c:Field Label="Payload (hex)"><TextBox x:Name="Sl1Payload" Style="{StaticResource MonoTextBox}"/></c:Field>
+              <c:OpCard.Actions><Button Content="PlusSetConfigSl1" Click="Sl1_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="PersonalizeUID" OneWay="True" Signature="card.PlusPersonalizeUid(byte uidType)" Description="UID personalisation (7-byte, random, ...); type per the manual.">
+              <c:Field Label="UID type (hex)" Width="120" HorizontalAlignment="Left"><TextBox x:Name="UidType" Style="{StaticResource MonoTextBox}" Text="00"/></c:Field>
+              <c:OpCard.Actions><Button Content="PlusPersonalizeUid" Style="{StaticResource DestructiveButton}" Click="PersonalizeUid_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="VCSupportLastISOL3" Signature="card.PlusVcSupportLastIsoL3()" Description="Virtual card support: whether the card answered the last ISO level 3.">
+              <c:OpCard.Actions><Button Content="PlusVcSupportLastIsoL3" Click="Vc_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+      </TabControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

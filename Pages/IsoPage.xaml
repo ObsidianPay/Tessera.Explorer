@@ -1,0 +1,72 @@
+<UserControl x:Class="Tessera.Explorer.Pages.IsoPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Tessera.Explorer.Controls"
+             xmlns:nx="clr-namespace:Tessera.Nxpsc;assembly=Tessera.Nxpsc">
+  <ScrollViewer Style="{StaticResource PageScroll}">
+    <StackPanel MaxWidth="1040" HorizontalAlignment="Left">
+      <TabControl>
+        <TabItem Header="ISO 7816-4">
+          <StackPanel>
+            <c:OpCard Title="SELECT by DF name" Signature="card.IsoSelectDfName(ReadOnlySpan&lt;byte&gt; dfName)"
+                      Description="Switch the command set to ISO (Connection page) for these to be real ISO commands rather than ISO-wrapped native ones.">
+              <c:Field Label="DF name (hex or &quot;ascii&quot;)"><TextBox x:Name="DfName" Style="{StaticResource MonoTextBox}" Text="D2760000850101"/></c:Field>
+              <c:OpCard.Actions><Button Content="IsoSelectDfName" Style="{StaticResource PrimaryButton}" Click="SelectName_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="SELECT by file id" Signature="card.IsoSelectFid(ushort fid, bool isElementaryFile)">
+              <StackPanel Orientation="Horizontal">
+                <c:Field Label="FID (hex)" Width="120"><TextBox x:Name="SelFid" Style="{StaticResource MonoTextBox}" Text="E104"/></c:Field>
+                <CheckBox x:Name="SelIsEf" Content="Elementary file (EF)" IsChecked="True" VerticalAlignment="Center" Margin="12,6,0,0"/>
+              </StackPanel>
+              <c:OpCard.Actions><Button Content="IsoSelectFid" Style="{StaticResource PrimaryButton}" Click="SelectFid_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="READ BINARY / UPDATE BINARY" Signature="card.IsoReadBinary(byte sfi, ushort offset, int length)  /  IsoUpdateBinary(sfi, offset, data)"
+                      Description="SFI 0 addresses the currently selected EF. Length 0 asks for as much as the card returns.">
+              <StackPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="12"/><ColumnDefinition Width="100"/><ColumnDefinition Width="12"/><ColumnDefinition Width="100"/></Grid.ColumnDefinitions>
+                  <c:Field Label="SFI (hex)"><TextBox x:Name="BinSfi" Style="{StaticResource MonoTextBox}" Text="00"/></c:Field>
+                  <c:Field Grid.Column="2" Label="Offset (hex)"><TextBox x:Name="BinOffset" Style="{StaticResource MonoTextBox}" Text="0000"/></c:Field>
+                  <c:Field Grid.Column="4" Label="Length"><TextBox x:Name="BinLength" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                </Grid>
+                <c:Field Label="Data to write (hex or &quot;ascii&quot;)"><TextBox x:Name="BinData" Style="{StaticResource MultilineTextBox}"/></c:Field>
+              </StackPanel>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="IsoReadBinary" Style="{StaticResource PrimaryButton}" Click="ReadBinary_Click"/>
+                  <Button Content="IsoUpdateBinary" Margin="8,0,0,0" Click="UpdateBinary_Click"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+
+        <TabItem Header="NTAG 424 DNA">
+          <StackPanel>
+            <c:OpCard Title="Select the NTAG 424 DNA application" Signature="card.Ntag424Select()" Description="ISO DF name D2760000850101.">
+              <c:OpCard.Actions><Button Content="Ntag424Select" Style="{StaticResource PrimaryButton}" Click="NtagSelect_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="Secure dynamic messaging" Signature="card.ConfigureSdm(fileNo, comm, access, NxpscSdmSettings sdm)  /  NxpscLibrary.BuildSdmSettings(comm, access, sdm)"
+                      Description="ChangeFileSettings with SDM. 'Build payload' shows the bytes that would be sent, without a card.">
+              <StackPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="110"/><ColumnDefinition Width="12"/><ColumnDefinition Width="160"/></Grid.ColumnDefinitions>
+                  <c:Field Label="File no (hex)"><TextBox x:Name="SdmFile" Style="{StaticResource MonoTextBox}" Text="02"/></c:Field>
+                  <c:Field Grid.Column="2" Label="Comm mode"><c:EnumBox x:Name="SdmComm" EnumType="{x:Type nx:NxpscCommMode}"/></c:Field>
+                </Grid>
+                <c:AccessEditor x:Name="SdmAccess" Margin="0,0,0,12"/>
+                <c:SdmEditor x:Name="Sdm"/>
+              </StackPanel>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="ConfigureSdm" Style="{StaticResource DestructiveButton}" Click="ConfigureSdm_Click"/>
+                  <Button Content="Build payload" Margin="8,0,0,0" Click="BuildSdm_Click"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+      </TabControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

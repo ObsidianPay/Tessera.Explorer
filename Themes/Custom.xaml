@@ -1,0 +1,65 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:c="clr-namespace:Tessera.Explorer.Controls">
+
+  <ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="Controls.xaml"/>
+  </ResourceDictionary.MergedDictionaries>
+
+  <Style TargetType="c:EnumBox" BasedOn="{StaticResource {x:Type ComboBox}}"/>
+
+  <Style TargetType="c:OpCard">
+    <Setter Property="Margin" Value="0,0,0,12"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="c:OpCard">
+          <Border Style="{StaticResource CardSurface}">
+            <StackPanel>
+              <DockPanel LastChildFill="False">
+                <Border x:Name="OneWayPill" DockPanel.Dock="Right" Style="{StaticResource Pill}" Background="{DynamicResource DestructiveSoft}" Visibility="Collapsed">
+                  <TextBlock Text="ONE-WAY" Style="{StaticResource Eyebrow}" Foreground="{DynamicResource Destructive}"/>
+                </Border>
+                <TextBlock DockPanel.Dock="Left" Text="{TemplateBinding Title}" Style="{StaticResource SectionTitle}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <TextBlock x:Name="Desc" Text="{TemplateBinding Description}" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
+              <TextBlock x:Name="Sig" Text="{TemplateBinding Signature}" Style="{StaticResource Mono}" Foreground="{DynamicResource Primary}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap"/>
+              <ContentPresenter Margin="0,12,0,0"/>
+              <ContentPresenter x:Name="ActionsHost" Content="{TemplateBinding Actions}" Margin="0,14,0,0"/>
+            </StackPanel>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="OneWay" Value="True"><Setter TargetName="OneWayPill" Property="Visibility" Value="Visible"/></Trigger>
+            <Trigger Property="Description" Value="{x:Null}"><Setter TargetName="Desc" Property="Visibility" Value="Collapsed"/></Trigger>
+            <Trigger Property="Signature" Value="{x:Null}"><Setter TargetName="Sig" Property="Visibility" Value="Collapsed"/></Trigger>
+            <Trigger Property="Actions" Value="{x:Null}"><Setter TargetName="ActionsHost" Property="Visibility" Value="Collapsed"/></Trigger>
+            <Trigger Property="Content" Value="{x:Null}"><Setter Property="Padding" Value="0"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style TargetType="c:Field">
+    <Setter Property="Margin" Value="0,0,12,10"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="c:Field">
+          <StackPanel>
+            <TextBlock Text="{TemplateBinding Label}" Style="{StaticResource FieldLabel}"/>
+            <ContentPresenter/>
+            <TextBlock x:Name="HintText" Text="{TemplateBinding Hint}" Style="{StaticResource MutedText}" Margin="0,3,0,0" FontSize="11"/>
+          </StackPanel>
+          <ControlTemplate.Triggers>
+            <Trigger Property="Hint" Value="{x:Null}"><Setter TargetName="HintText" Property="Visibility" Value="Collapsed"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Page scaffolding -->
+  <Style x:Key="PageScroll" TargetType="ScrollViewer">
+    <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+    <Setter Property="Padding" Value="24,20,24,24"/>
+  </Style>
+</ResourceDictionary>

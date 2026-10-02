@@ -1,0 +1,133 @@
+<UserControl x:Class="Tessera.Explorer.Pages.MockLabPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Tessera.Explorer.Controls"
+             xmlns:nx="clr-namespace:Tessera.Nxpsc;assembly=Tessera.Nxpsc">
+  <ScrollViewer Style="{StaticResource PageScroll}">
+    <StackPanel MaxWidth="1040" HorizontalAlignment="Left">
+      <Border Background="{DynamicResource PrimarySoft}" CornerRadius="8" Padding="14,10" Margin="0,0,0,14">
+        <TextBlock Style="{StaticResource MutedText}" Foreground="{DynamicResource Foreground}" LineHeight="18"
+                   Text="These calls act on the simulated card itself, not through the card protocol. The mock runs the real framing and the real card-side crypto, but it cannot see what a ChangeKey cryptogram carried and it does not enforce access rights. State what it should believe here."/>
+      </Border>
+      <TabControl>
+        <TabItem Header="Content">
+          <StackPanel>
+            <c:OpCard Title="Seed a demo application" Description="Adds application 123456 (AES-128, three keys, factory zero keys), selects it, and adds a standard file 01, a cyclic record file 02 and a backup file 03, all plain with free access. A quick way to have something to explore.">
+              <c:OpCard.Actions><Button Content="Seed demo content" Style="{StaticResource PrimaryButton}" Click="Seed_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="AddApplication / HasApplication" Signature="mock.AddApplication(aid, keyType, numKeys)  /  mock.HasApplication(aid)">
+              <WrapPanel>
+                <c:Field Label="AID (hex)" Width="120"><TextBox x:Name="AppAid" Style="{StaticResource MonoTextBox}" Text="123456"/></c:Field>
+                <c:Field Label="Key type" Width="170"><c:EnumBox x:Name="AppType" EnumType="{x:Type nx:NxpscKeyType}"/></c:Field>
+                <c:Field Label="Keys" Width="80"><TextBox x:Name="AppKeys" Style="{StaticResource MonoTextBox}" Text="3"/></c:Field>
+              </WrapPanel>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="AddApplication" Style="{StaticResource PrimaryButton}" Click="AddApp_Click"/>
+                  <Button Content="HasApplication" Margin="8,0,0,0" Click="HasApp_Click"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="AddFile" Signature="mock.AddFile(fileNo, type, comm, access, recordSize, maxRecords, size)"
+                      Description="A file the card already holds, as if an earlier run had created it. Goes into the application currently selected on the card.">
+              <StackPanel>
+                <WrapPanel>
+                  <c:Field Label="File no (hex)" Width="110"><TextBox x:Name="FileNo" Style="{StaticResource MonoTextBox}" Text="01"/></c:Field>
+                  <c:Field Label="Type" Width="190"><c:EnumBox x:Name="FileType" EnumType="{x:Type nx:NxpscFileType}"/></c:Field>
+                  <c:Field Label="Comm mode" Width="150"><c:EnumBox x:Name="FileComm" EnumType="{x:Type nx:NxpscCommMode}"/></c:Field>
+                  <c:Field Label="Size" Width="90"><TextBox x:Name="FileSize" Style="{StaticResource MonoTextBox}" Text="32"/></c:Field>
+                  <c:Field Label="Record size" Width="100"><TextBox x:Name="FileRecSize" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                  <c:Field Label="Max records" Width="100"><TextBox x:Name="FileRecMax" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                </WrapPanel>
+                <c:AccessEditor x:Name="FileAccess"/>
+              </StackPanel>
+              <c:OpCard.Actions><Button Content="AddFile" Click="AddFile_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+
+        <TabItem Header="Keys">
+          <StackPanel>
+            <c:OpCard Title="SetKey / KeyEquals" Signature="mock.SetKey(aid, keyNo, key)  /  mock.KeyEquals(aid, keyNo, key)"
+                      Description="AID 000000 key 0 is the PICC master key. KeyEquals is how you prove a ChangeKey took effect on the simulated card.">
+              <StackPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="120"/></Grid.ColumnDefinitions>
+                  <c:Field Label="AID (hex)"><TextBox x:Name="KeyAid" Style="{StaticResource MonoTextBox}" Text="000000"/></c:Field>
+                  <c:Field Grid.Column="2" Label="Key no (hex)"><TextBox x:Name="KeyNo" Style="{StaticResource MonoTextBox}" Text="00"/></c:Field>
+                </Grid>
+                <c:KeyEditor x:Name="MockKey"/>
+              </StackPanel>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="SetKey" Style="{StaticResource PrimaryButton}" Click="SetKey_Click"/>
+                  <Button Content="KeyEquals" Margin="8,0,0,0" Click="KeyEquals_Click"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="What a ChangeKey leaves behind" Signature="mock.SetChangeKeyResult(key)  /  mock.SetChangeKeyIgnored()"
+                      Description="Declare this before sending ChangeKey: the mock acknowledges the command but cannot decipher the cryptogram, so it is told what the key reads as afterwards. 'Ignored' acknowledges and silently keeps the old key.">
+              <c:KeyEditor x:Name="ChangeResultKey"/>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="SetChangeKeyResult" Style="{StaticResource PrimaryButton}" Click="ChangeResult_Click"/>
+                  <Button Content="SetChangeKeyIgnored" Margin="8,0,0,0" Click="ChangeIgnored_Click"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+
+        <TabItem Header="Transaction MAC">
+          <StackPanel>
+            <c:OpCard Title="Transaction MAC key" Signature="mock.SetTransactionMacKey(key)  /  mock.EnableTransactionMac()"
+                      Description="A real card is told the key inside CreateTransactionMACFile, enciphered; the mock does not decipher command data, so state it here. The file still has to be created on the card before a commit returns a MAC (or enable the feature outright).">
+              <c:KeyEditor x:Name="TmacKey" Label="AppTransactionMACKey (AES-128)"/>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="SetTransactionMacKey" Style="{StaticResource PrimaryButton}" Click="TmKey_Click"/>
+                  <Button Content="EnableTransactionMac" Margin="8,0,0,0" Click="TmEnable_Click"/>
+                  <Button Content="Read counter" Margin="8,0,0,0" Click="TmCounter_Click"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="Transaction MAC file settings" Signature="mock.SetTransactionMacFileSettings(fileNo, comm, access)">
+              <StackPanel>
+                <WrapPanel>
+                  <c:Field Label="File no (hex)" Width="110"><TextBox x:Name="TmFile" Style="{StaticResource MonoTextBox}" Text="0F"/></c:Field>
+                  <c:Field Label="Comm mode" Width="150"><c:EnumBox x:Name="TmComm" EnumType="{x:Type nx:NxpscCommMode}"/></c:Field>
+                </WrapPanel>
+                <c:AccessEditor x:Name="TmAccess"/>
+              </StackPanel>
+              <c:OpCard.Actions><Button Content="SetTransactionMacFileSettings" Click="TmFileSettings_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+          </StackPanel>
+        </TabItem>
+
+        <TabItem Header="Behaviour">
+          <StackPanel>
+            <c:OpCard Title="Signature" Signature="mock.SetSignature(ReadOnlySpan&lt;byte&gt; signature)" Description="What GetSignature returns.">
+              <c:Field Label="Signature (hex, up to 64 bytes)"><TextBox x:Name="Sig" Style="{StaticResource MonoTextBox}" Text="000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F3031323334353637"/></c:Field>
+              <c:OpCard.Actions><Button Content="SetSignature" Click="Sig_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+            <c:OpCard Title="Tear the field" Signature="mock.TearOn(byte nativeCommand, bool afterExecute)  /  mock.Torn  /  mock.Reinsert()"
+                      Description="The card leaves the field at the first frame carrying the command. Before execute: nothing happened. After execute: the card did it but the host never heard. Reinsert puts it back.">
+              <StackPanel Orientation="Horizontal">
+                <c:Field Label="Native command (hex)" Width="160"><TextBox x:Name="TearCmd" Style="{StaticResource MonoTextBox}" Text="3B"/></c:Field>
+                <CheckBox x:Name="TearAfter" Content="After execute" Margin="12,6,0,0" VerticalAlignment="Center"/>
+              </StackPanel>
+              <c:OpCard.Actions>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="TearOn" Style="{StaticResource PrimaryButton}" Click="Tear_Click"/>
+                  <Button Content="Torn?" Margin="8,0,0,0" Click="Torn_Click"/>
+                  <Button Content="Reinsert" Margin="8,0,0,0" Click="Reinsert_Click"/>
+                </StackPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+            <TextBlock Style="{StaticResource MutedText}" Text="Handy native codes: 3B WriteRecord, C7 CommitTransaction, 60 GetVersion, 5A SelectApplication, AA/1A/71 authenticate."/>
+          </StackPanel>
+        </TabItem>
+      </TabControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

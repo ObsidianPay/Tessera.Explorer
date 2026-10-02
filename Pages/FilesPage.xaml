@@ -1,0 +1,187 @@
+<UserControl x:Class="Tessera.Explorer.Pages.FilesPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Tessera.Explorer.Controls"
+             xmlns:nx="clr-namespace:Tessera.Nxpsc;assembly=Tessera.Nxpsc">
+  <Grid Margin="24,20,24,0">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="330"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+
+    <!-- ===== file list ===== -->
+    <Border Style="{StaticResource CardSurface}" Margin="0,0,0,20" Padding="0">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="16,14,16,10">
+          <TextBlock Text="Files" Style="{StaticResource SectionTitle}"/>
+          <TextBlock x:Name="AppLabel" Style="{StaticResource MutedText}" Margin="0,2,0,0"/>
+          <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+            <Button Content="Scan" Style="{StaticResource PrimaryButton}" Click="Scan_Click" ToolTip="GetFileIds, then GetFileSettings for each"/>
+            <Button Content="ISO FIDs" Margin="6,0,0,0" Click="IsoIds_Click" ToolTip="GetIsoFileIds"/>
+          </StackPanel>
+        </StackPanel>
+        <Border Style="{StaticResource Hairline}" DockPanel.Dock="Top"/>
+        <DataGrid x:Name="FileGrid" SelectionChanged="FileGrid_Selected" Margin="4,0">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="NO" Binding="{Binding No}" Width="44"/>
+            <DataGridTextColumn Header="TYPE" Binding="{Binding Type}" Width="*"/>
+            <DataGridTextColumn Header="COMM" Binding="{Binding Comm}" Width="60"/>
+            <DataGridTextColumn Header="SIZE" Binding="{Binding Size}" Width="80"/>
+          </DataGrid.Columns>
+        </DataGrid>
+      </DockPanel>
+    </Border>
+
+    <!-- ===== operations ===== -->
+    <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Padding="0,0,4,20">
+      <StackPanel>
+        <Border Style="{StaticResource CardSurface}" Margin="0,0,0,14">
+          <StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions><ColumnDefinition Width="110"/><ColumnDefinition Width="12"/><ColumnDefinition Width="150"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+              <c:Field Label="Target file (hex)" Margin="0"><TextBox x:Name="FileNo" Style="{StaticResource MonoTextBox}" Text="01"/></c:Field>
+              <c:Field Grid.Column="2" Label="Comm mode" Margin="0"><c:EnumBox x:Name="Comm" EnumType="{x:Type nx:NxpscCommMode}"/></c:Field>
+              <TextBlock Grid.Column="4" x:Name="FileSummary" Style="{StaticResource Mono}" FontSize="12" Foreground="{DynamicResource MutedForeground}" TextWrapping="Wrap" VerticalAlignment="Bottom"/>
+            </Grid>
+            <TextBlock Style="{StaticResource MutedText}" Margin="0,8,0,0" Text="Selecting a row fills the file number and the comm mode the file expects. Plain access without a session works only when the file's read right is free."/>
+          </StackPanel>
+        </Border>
+
+        <TabControl>
+          <!-- data -->
+          <TabItem Header="Data">
+            <StackPanel>
+              <c:OpCard Title="ReadData / WriteData" Signature="card.ReadData(fileNo, offset, length, comm)  /  card.WriteData(fileNo, offset, data, comm)"
+                        Description="Standard and backup files. Length 0 reads to the end. Backup files need a commit after writing.">
+                <StackPanel>
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="120"/></Grid.ColumnDefinitions>
+                    <c:Field Label="Offset"><TextBox x:Name="DataOffset" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                    <c:Field Grid.Column="2" Label="Length (read)"><TextBox x:Name="DataLength" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                  </Grid>
+                  <c:Field Label="Data to write (hex, or &quot;ascii&quot;)"><TextBox x:Name="DataBytes" Style="{StaticResource MultilineTextBox}"/></c:Field>
+                </StackPanel>
+                <c:OpCard.Actions>
+                  <StackPanel Orientation="Horizontal">
+                    <Button Content="ReadData" Style="{StaticResource PrimaryButton}" Click="ReadData_Click"/>
+                    <Button Content="WriteData" Margin="8,0,0,0" Click="WriteData_Click"/>
+                  </StackPanel>
+                </c:OpCard.Actions>
+              </c:OpCard>
+            </StackPanel>
+          </TabItem>
+
+          <!-- value -->
+          <TabItem Header="Value">
+            <c:OpCard Title="Value file operations" Signature="card.GetValue(fileNo, comm)  /  Credit / LimitedCredit / Debit(fileNo, delta, comm)"
+                      Description="Credit, LimitedCredit and Debit are staged in the transaction: commit afterwards (Transaction tab).">
+              <c:Field Label="Delta (signed decimal)" Width="180" HorizontalAlignment="Left"><TextBox x:Name="ValueDelta" Style="{StaticResource MonoTextBox}" Text="1"/></c:Field>
+              <c:OpCard.Actions>
+                <WrapPanel>
+                  <Button Content="GetValue" Style="{StaticResource PrimaryButton}" Click="GetValue_Click" Margin="0,0,8,0"/>
+                  <Button Content="Credit" Click="Credit_Click" Margin="0,0,8,0"/>
+                  <Button Content="LimitedCredit" Click="LimitedCredit_Click" Margin="0,0,8,0"/>
+                  <Button Content="Debit" Click="Debit_Click"/>
+                </WrapPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+          </TabItem>
+
+          <!-- records -->
+          <TabItem Header="Records">
+            <c:OpCard Title="Record file operations" Signature="WriteRecord(fileNo, offset, data, comm)  /  UpdateRecord(fileNo, recordNo, offset, data, comm)  /  ReadRecords(fileNo, recordNo, count, comm)  /  ClearRecordFile(fileNo)"
+                      Description="ReadRecords returns oldest first; count 0 reads them all. UpdateRecord addresses record 0 as the most recent. Writes and clears are staged until a commit.">
+              <StackPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="120"/><ColumnDefinition Width="12"/><ColumnDefinition Width="120"/></Grid.ColumnDefinitions>
+                  <c:Field Label="Record no"><TextBox x:Name="RecNo" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                  <c:Field Grid.Column="2" Label="Count (read)"><TextBox x:Name="RecCount" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                  <c:Field Grid.Column="4" Label="Offset in record"><TextBox x:Name="RecOffset" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                </Grid>
+                <c:Field Label="Record data (hex, or &quot;ascii&quot;)"><TextBox x:Name="RecData" Style="{StaticResource MultilineTextBox}"/></c:Field>
+              </StackPanel>
+              <c:OpCard.Actions>
+                <WrapPanel>
+                  <Button Content="ReadRecords" Style="{StaticResource PrimaryButton}" Click="ReadRecords_Click" Margin="0,0,8,0"/>
+                  <Button Content="WriteRecord" Click="WriteRecord_Click" Margin="0,0,8,0"/>
+                  <Button Content="UpdateRecord" Click="UpdateRecord_Click" Margin="0,0,8,0"/>
+                  <Button Content="ClearRecordFile" Click="ClearRecords_Click"/>
+                </WrapPanel>
+              </c:OpCard.Actions>
+            </c:OpCard>
+          </TabItem>
+
+          <!-- transaction -->
+          <TabItem Header="Transaction">
+            <StackPanel>
+              <c:OpCard Title="Commit / abort" Signature="card.CommitTransaction()  /  CommitTransactionWithMac()  /  AbortTransaction()"
+                        Description="Applies or discards everything staged since the last commit. With MAC asks the card for its transaction counter and MAC (needs a transaction MAC file).">
+                <c:OpCard.Actions>
+                  <WrapPanel>
+                    <Button Content="CommitTransaction" Style="{StaticResource PrimaryButton}" Click="Commit_Click" Margin="0,0,8,0"/>
+                    <Button Content="Commit with MAC" Click="CommitMac_Click" Margin="0,0,8,0"/>
+                    <Button Content="AbortTransaction" Click="Abort_Click"/>
+                  </WrapPanel>
+                </c:OpCard.Actions>
+              </c:OpCard>
+              <c:OpCard Title="CommitReaderID" Signature="card.CommitReaderId(ReadOnlySpan&lt;byte&gt; readerId)"
+                        Description="EV2 transaction MAC files. Returns the previous reader id, enciphered.">
+                <c:Field Label="Reader id (hex, 16 bytes)"><TextBox x:Name="ReaderId" Style="{StaticResource MonoTextBox}" Text="00000000000000000000000000000000"/></c:Field>
+                <c:OpCard.Actions><Button Content="CommitReaderId" Click="CommitReaderId_Click"/></c:OpCard.Actions>
+              </c:OpCard>
+            </StackPanel>
+          </TabItem>
+
+          <!-- settings -->
+          <TabItem Header="Settings">
+            <StackPanel>
+              <c:OpCard Title="GetFileSettings" Signature="card.GetFileSettings(byte fileNo)">
+                <c:OpCard.Actions><Button Content="GetFileSettings" Style="{StaticResource PrimaryButton}" Click="GetSettings_Click"/></c:OpCard.Actions>
+              </c:OpCard>
+              <c:OpCard Title="ChangeFileSettings" OneWay="True" Signature="card.ChangeFileSettings(fileNo, comm, access)  /  ChangeFileSettings(fileNo, ReadOnlySpan&lt;byte&gt; payload)"
+                        Description="The comm mode above and these access rights are sent. Moving the change right to 'denied' freezes the settings for good. The raw form sends a payload verbatim (SDM and vendor settings).">
+                <StackPanel>
+                  <c:AccessEditor x:Name="ChangeAccess"/>
+                  <c:Field Label="Raw payload (hex, optional - overrides the fields above)" Margin="0,10,0,0"><TextBox x:Name="ChangeRaw" Style="{StaticResource MonoTextBox}"/></c:Field>
+                </StackPanel>
+                <c:OpCard.Actions><Button Content="ChangeFileSettings" Style="{StaticResource DestructiveButton}" Click="ChangeSettings_Click"/></c:OpCard.Actions>
+              </c:OpCard>
+              <c:OpCard Title="DeleteFile" Signature="card.DeleteFile(byte fileNo)">
+                <c:OpCard.Actions><Button Content="DeleteFile" Style="{StaticResource DestructiveButton}" Click="DeleteFile_Click"/></c:OpCard.Actions>
+              </c:OpCard>
+            </StackPanel>
+          </TabItem>
+
+          <!-- create -->
+          <TabItem Header="Create">
+            <c:OpCard Title="Create a file" Signature="CreateStdFile / CreateBackupFile / CreateValueFile / CreateRecordFile"
+                      Description="Uses the file number and comm mode above. Needs the application's create right.">
+              <StackPanel>
+                <c:Field Label="Type" Width="220" HorizontalAlignment="Left">
+                  <ComboBox x:Name="CreateType" SelectionChanged="CreateType_Changed"/>
+                </c:Field>
+                <c:AccessEditor x:Name="CreateAccess" Margin="0,0,0,10"/>
+                <c:Field Label="ISO file id (hex, 0 = none)" Width="180" HorizontalAlignment="Left"><TextBox x:Name="CreateFid" Style="{StaticResource MonoTextBox}" Text="0000"/></c:Field>
+                <StackPanel x:Name="SizePanel">
+                  <c:Field Label="Size (bytes)" Width="180" HorizontalAlignment="Left"><TextBox x:Name="CreateSize" Style="{StaticResource MonoTextBox}" Text="32"/></c:Field>
+                </StackPanel>
+                <StackPanel x:Name="ValuePanel" Visibility="Collapsed">
+                  <WrapPanel>
+                    <c:Field Label="Lower limit" Width="140"><TextBox x:Name="ValLower" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                    <c:Field Label="Upper limit" Width="140"><TextBox x:Name="ValUpper" Style="{StaticResource MonoTextBox}" Text="10000"/></c:Field>
+                    <c:Field Label="Initial value" Width="140"><TextBox x:Name="ValInitial" Style="{StaticResource MonoTextBox}" Text="0"/></c:Field>
+                  </WrapPanel>
+                  <CheckBox x:Name="ValLimited" Content="Limited credit enabled"/>
+                </StackPanel>
+                <StackPanel x:Name="RecordPanel" Visibility="Collapsed">
+                  <WrapPanel>
+                    <c:Field Label="Record size" Width="140"><TextBox x:Name="RecSize" Style="{StaticResource MonoTextBox}" Text="32"/></c:Field>
+                    <c:Field Label="Max records" Width="140"><TextBox x:Name="RecMax" Style="{StaticResource MonoTextBox}" Text="8"/></c:Field>
+                  </WrapPanel>
+                </StackPanel>
+              </StackPanel>
+              <c:OpCard.Actions><Button Content="Create file" Style="{StaticResource PrimaryButton}" Click="CreateFile_Click"/></c:OpCard.Actions>
+            </c:OpCard>
+          </TabItem>
+        </TabControl>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>
